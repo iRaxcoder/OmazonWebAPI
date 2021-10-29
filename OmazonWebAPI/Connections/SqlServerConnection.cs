@@ -22,8 +22,6 @@ namespace OmazonWebAPI.Connections
 
         public IConfiguration Configuration { get; }
 
-      
-
         public void InitSqlComponents(string commandText)
         {
             this.SqlConnection = new SqlConnection(Configuration.GetConnectionString("DB_Connection_Provider1"));
@@ -35,7 +33,7 @@ namespace OmazonWebAPI.Connections
             SqlParameter sqlParameter = new(parameterName, dbType);
             sqlParameter.Value = value;
             this.SqlCommand.Parameters.Add(sqlParameter);
-            //hola raque
+            
         }
 
         public void CreateParameterOutput()

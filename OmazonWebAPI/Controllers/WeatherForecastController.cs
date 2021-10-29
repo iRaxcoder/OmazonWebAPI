@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using OmazonWebAPI.Connections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,10 +19,12 @@ namespace OmazonWebAPI.Controllers
         };
 
         private readonly ILogger<WeatherForecastController> _logger;
+        public IConfiguration Configuration { get; }
 
-        public WeatherForecastController(ILogger<WeatherForecastController> logger)
+        public WeatherForecastController(ILogger<WeatherForecastController> logger, IConfiguration configuration)
         {
             _logger = logger;
+            Configuration = configuration;
         }
 
         [HttpGet]
