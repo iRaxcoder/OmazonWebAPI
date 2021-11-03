@@ -58,6 +58,11 @@ namespace OmazonWebAPI.Connections
             this.SqlConnection.Close();
         }
 
+        public void JustExecuteNonQuery()
+        {
+            this.SqlCommand.ExecuteNonQuery();
+        }
+
         public void ExcecuteReader()
         {
             this.ExecuteConnectionCommands();
