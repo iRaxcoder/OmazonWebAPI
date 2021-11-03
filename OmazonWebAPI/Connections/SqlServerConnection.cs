@@ -22,9 +22,17 @@ namespace OmazonWebAPI.Connections
 
         public IConfiguration Configuration { get; }
 
-        public void InitSqlComponents(string commandText)
+        public void InitSqlComponents(string commandText, int BdType)
         {
-            this.SqlConnection = new SqlConnection(Configuration.GetConnectionString("DB_Connection_Provider1"));
+            if (BdType == 1)
+            {
+                this.SqlConnection = new SqlConnection(Configuration.GetConnectionString("DB_Connection_Omazon"));
+            }
+            else
+            {
+                this.SqlConnection = new SqlConnection(Configuration.GetConnectionString("DB_Connection_Provider1"));
+            }
+
             this.SqlCommand = new SqlCommand(commandText, this.SqlConnection);
         }
 
