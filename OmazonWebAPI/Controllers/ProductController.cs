@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using OmazonWebAPI.Connections;
 using OmazonWebAPI.Models;
@@ -73,10 +74,10 @@ namespace OmazonWebAPI.Controllers
                         this.SendToOmazonProducts(this.GetP1Products(), Int32.Parse(response));
                         break;
                     case "2":
-
+                        this.SendToOmazonProducts(this.GetP2Products(), Int32.Parse(response));
                         break;
                     case "3":
-
+                        this.SendToOmazonProducts(this.GetP3Products(), Int32.Parse(response));
                         break;
                 }
 
@@ -148,6 +149,56 @@ namespace OmazonWebAPI.Controllers
                 }) ;
             }
             DbConnection.SqlConnection.Close();
+            return ProductList;
+        }
+
+        //Obtener Productos proveedor 2
+        private List<ProductModel> GetP2Products()
+        {
+            _MySqlConnection DbConnection = new _MySqlConnection(Configuration);
+            string commandText = "sp_mostrar_productos";
+            DbConnection.InitMySqlComponents(commandText, 3);
+            DbConnection.ExcecuteReader();
+
+            List<ProductModel> ProductList = new List<ProductModel>();
+
+            while (DbConnection.MySqlDataReader.Read())
+            {
+                ProductList.Add(new ProductModel
+                {
+                    Name = DbConnection.MySqlDataReader["NOMBRE_PRODUCTO"].ToString(),
+                    Price = DbConnection.MySqlDataReader["PRECIO"].ToString(),
+                    Stock = int.Parse(DbConnection.MySqlDataReader["STOCK"].ToString()),
+                    ImagePath = DbConnection.MySqlDataReader["RUTA_IMAGEN"].ToString(),
+                    Category = DbConnection.MySqlDataReader["NOMBRE_CATEGORIA"].ToString(),
+                });
+            }
+            DbConnection.MySqlConnection.Close();
+            return ProductList;
+        }
+
+        //Obtener Productos proveedor 3
+        private List<ProductModel> GetP3Products()
+        {
+            PostgreSQL DbConnection = new PostgreSQL(Configuration);
+            string commandText = "public.obtenerproducto";
+            DbConnection.InitPostgresSqlComponents(commandText);
+            DbConnection.ExcecuteReader();
+
+            List<ProductModel> ProductList = new List<ProductModel>();
+
+            while (DbConnection.NpgsqlReader.Read())
+            {
+                ProductList.Add(new ProductModel
+                {
+                    Name = DbConnection.NpgsqlReader["nombre"].ToString(),
+                    Price = DbConnection.NpgsqlReader["nombre"].ToString(),
+                    Stock = int.Parse(DbConnection.NpgsqlReader["stock"].ToString()),
+                    ImagePath = DbConnection.NpgsqlReader["ruta_imagen"].ToString(),
+                    Category = DbConnection.NpgsqlReader["nombre_categoria"].ToString(),
+                });
+            }
+            DbConnection.NpgsqlConnection.Close();
             return ProductList;
         }
     }

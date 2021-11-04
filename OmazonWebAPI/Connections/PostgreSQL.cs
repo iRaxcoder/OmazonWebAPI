@@ -18,7 +18,10 @@ namespace OmazonWebAPI.Connections
         public NpgsqlParameter ParameterReturn { get; set; }
         
         public IConfiguration Configuration { get; }
-
+        public PostgreSQL(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
         public void InitPostgresSqlComponents(string commandText)
         {
             this.NpgsqlConnection = new NpgsqlConnection(Configuration.GetConnectionString("DB_Connection_Provider3"));
