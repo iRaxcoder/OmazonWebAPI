@@ -51,7 +51,7 @@ namespace OmazonWebAPI.Controllers
             var read = DbConnection.SqlDataReader.Read();
             return DbConnection.SqlDataReader.GetValue(0);
         }
-
+        
         [HttpPost]
         [Route("ManageAccess")]
         public IActionResult DoManageAccess([FromBody] AccessRequestModel request)
@@ -186,12 +186,13 @@ namespace OmazonWebAPI.Controllers
             {
                 ProductList.Add(new ProductModel
                 {
-                    Name = DbConnection.NpgsqlReader["nombre"].ToString(),
-                    Price = DbConnection.NpgsqlReader["precio"].ToString(),
-                    Stock = int.Parse(DbConnection.NpgsqlReader["stock"].ToString()),
-                    ImagePath = DbConnection.NpgsqlReader["ruta_imagen"].ToString(),
-                    Category = DbConnection.NpgsqlReader["nombre_categoria"].ToString(),
-                });
+
+                    Name = DbConnection.NpgsqlReader.GetString(2),
+                    Price = DbConnection.NpgsqlReader.GetInt32(3).ToString(),
+                    Stock = DbConnection.NpgsqlReader.GetInt32(5),
+                    ImagePath = DbConnection.NpgsqlReader.GetString(4),
+                    Category = DbConnection.NpgsqlReader.GetString(1)
+                }) ; 
             }
             DbConnection.NpgsqlConnection.Close();
             return ProductList;
