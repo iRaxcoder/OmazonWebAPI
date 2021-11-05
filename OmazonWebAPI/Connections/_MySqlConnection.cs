@@ -21,7 +21,7 @@ namespace OmazonWebAPI.Connections
 
         public IConfiguration Configuration { get; }
 
-        public void InitMySqlComponents(string commandText)
+        public void InitMySqlComponents(string commandText, int v)
         {
             this.MySqlConnection = new MySqlConnection();
             this.MySqlConnection.ConnectionString = Configuration.GetConnectionString("DB_Connection_Provider2");

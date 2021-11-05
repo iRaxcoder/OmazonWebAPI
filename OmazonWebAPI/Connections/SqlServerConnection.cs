@@ -28,11 +28,11 @@ namespace OmazonWebAPI.Connections
             {
                 this.SqlConnection = new SqlConnection(Configuration.GetConnectionString("DB_Connection_Omazon"));
             }
-            else
+            else 
             {
                 this.SqlConnection = new SqlConnection(Configuration.GetConnectionString("DB_Connection_Provider1"));
             }
-
+            
             this.SqlCommand = new SqlCommand(commandText, this.SqlConnection);
         }
 
