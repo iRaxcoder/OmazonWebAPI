@@ -4,7 +4,6 @@ using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using OmazonWebAPI.Connections;
 using OmazonWebAPI.Models;
-using OmazonWebAPI.Utility;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -27,49 +26,47 @@ namespace OmazonWebAPI.Controllers
 
         [HttpPost]
         [Route("SendProviderRequest")]
-        public IActionResult DoAccessRequest([FromBody] ServiceResponse request)
+        public IActionResult DoAccessRequest([FromBody] AccessRequestModel request)
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
             this.ExecRegisterRequest(DbConnection, request);
-            string response = GetDbResponse(DbConnection);
+            string response = GetDbResponse(DbConnection).ToString();
             DbConnection.SqlConnection.Close();
 
             return Ok(response);
         }
 
-        private void ExecRegisterRequest(SqlServerConnection DbConnection, ServiceResponse model)
+        private void ExecRegisterRequest(SqlServerConnection DbConnection, AccessRequestModel model)
         {
             string param_clave = "@param_clave"
             , param_firma = "@param_firma",
              commandText = "OMAZON.sp_CREAR_SOLICITUD";
             DbConnection.InitSqlComponents(commandText, 1);
-            DbConnection.CreateParameter(param_clave, SqlDbType.VarChar, model.Msg1);
-            DbConnection.CreateParameter(param_firma, SqlDbType.VarChar, model.Msg2);
+            DbConnection.CreateParameter(param_clave, SqlDbType.VarChar, model.Key);
+            DbConnection.CreateParameter(param_firma, SqlDbType.VarChar, model.Details);
             DbConnection.ExcecuteReader();
         }
-        private String GetDbResponse(SqlServerConnection DbConnection)
+        private object GetDbResponse(SqlServerConnection DbConnection)
         {
             var read = DbConnection.SqlDataReader.Read();
-            return DbConnection.SqlDataReader.GetString(0);
+            return DbConnection.SqlDataReader.GetValue(0);
         }
 
         [HttpPost]
         [Route("ManageAccess")]
-        public IActionResult DoManageAccess([FromBody] ServiceResponse request)
+        public IActionResult DoManageAccess([FromBody] AccessRequestModel request)
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
             this.ExecManageRequest(DbConnection, request);
-            string response = GetDbResponse(DbConnection);
+            string response = GetDbResponse(DbConnection).ToString();
             DbConnection.SqlConnection.Close();
 
-            if (response.Equals("0"))
-            {
-                return Ok("La solicitud de acceso no corresponde a ninguna clave");
-            }
-            else
-            {
                 switch (response)
                 {
+                    case "-1":
+                        return Ok("La solicitud no pudo ser procesada. Ya ha sido atendida.");
+                    case "0":
+                        return Ok("La solicitud de acceso no corresponde a ninguna clave de acceso. Consulte con el administrador.");
                     case "1":
                         this.SendToOmazonProducts(this.GetP1Products(), Int32.Parse(response));
                         break;
@@ -77,22 +74,20 @@ namespace OmazonWebAPI.Controllers
                         this.SendToOmazonProducts(this.GetP2Products(), Int32.Parse(response));
                         break;
                     case "3":
-                        this.SendToOmazonProducts(this.GetP3Products(), Int32.Parse(response));
+                        return Ok(this.GetP3Products());
+                        //this.SendToOmazonProducts(this.GetP3Products(), Int32.Parse(response));
                         break;
                 }
-
-
                 return Ok("La solicitud de acceso ha sido atendida con éxito");
             }
-        }
 
-        private void ExecManageRequest(SqlServerConnection DbConnection, ServiceResponse model)
+        private void ExecManageRequest(SqlServerConnection DbConnection, AccessRequestModel model)
         {
-            string param_clave = "@param_clave",
+            string param_clave = "@param_id",
                 commandText = "OMAZON.sp_VERIFICAR_VALIDAR_SOLICITUD";
 
             DbConnection.InitSqlComponents(commandText, 1);
-            DbConnection.CreateParameter(param_clave, SqlDbType.VarChar, model.Msg1);
+            DbConnection.CreateParameter(param_clave, SqlDbType.VarChar, model.RequestId);
             DbConnection.ExcecuteReader();
         }
 
@@ -100,7 +95,7 @@ namespace OmazonWebAPI.Controllers
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
             DbConnection.SqlConnection.Open();
-            String commandText = "OMAZON.sp_INSERTAR_PRODUCTO_PROVEEDOR_EXTERNO";
+            string commandText = "OMAZON.sp_INSERTAR_PRODUCTO_PROVEEDOR_EXTERNO";
             DbConnection.InitSqlComponents(commandText, 1);
             SqlTransaction transaction = DbConnection.SqlConnection.BeginTransaction();
             DbConnection.SqlCommand.Transaction = transaction;
@@ -142,11 +137,11 @@ namespace OmazonWebAPI.Controllers
                 ProductList.Add(new ProductModel
                 {
                     Name = DbConnection.SqlDataReader["NOMBRE"].ToString(),
-                    Price= DbConnection.SqlDataReader["PRECIO"].ToString(),
-                    Stock= int.Parse(DbConnection.SqlDataReader["STOCK"].ToString()),
-                    ImagePath= DbConnection.SqlDataReader["RUTA_IMAGEN"].ToString(),
-                    Category= DbConnection.SqlDataReader["NOMBRE_CATEGORIA"].ToString(),
-                }) ;
+                    Price = DbConnection.SqlDataReader["PRECIO"].ToString(),
+                    Stock = int.Parse(DbConnection.SqlDataReader["STOCK"].ToString()),
+                    ImagePath = DbConnection.SqlDataReader["RUTA_IMAGEN"].ToString(),
+                    Category = DbConnection.SqlDataReader["NOMBRE_CATEGORIA"].ToString(),
+                });
             }
             DbConnection.SqlConnection.Close();
             return ProductList;
@@ -192,7 +187,7 @@ namespace OmazonWebAPI.Controllers
                 ProductList.Add(new ProductModel
                 {
                     Name = DbConnection.NpgsqlReader["nombre"].ToString(),
-                    Price = DbConnection.NpgsqlReader["nombre"].ToString(),
+                    Price = DbConnection.NpgsqlReader["precio"].ToString(),
                     Stock = int.Parse(DbConnection.NpgsqlReader["stock"].ToString()),
                     ImagePath = DbConnection.NpgsqlReader["ruta_imagen"].ToString(),
                     Category = DbConnection.NpgsqlReader["nombre_categoria"].ToString(),
