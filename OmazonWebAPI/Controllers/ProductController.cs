@@ -68,7 +68,8 @@ namespace OmazonWebAPI.Controllers
                     case "0":
                         return Ok("La solicitud de acceso no corresponde a ninguna clave de acceso. Consulte con el administrador.");
                     case "1":
-                        this.SendToOmazonProducts(this.GetP1Products(), int.Parse(response));
+                    return Ok(this.GetP1Products());
+                        //this.SendToOmazonProducts(this.GetP1Products(), int.Parse(response));
                         break;
                     case "2":
                         this.SendToOmazonProducts(this.GetP2Products(), int.Parse(response));
@@ -93,22 +94,30 @@ namespace OmazonWebAPI.Controllers
         private void SendToOmazonProducts(List<ProductModel> ProviderProductList, int Id_proveedor)
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
-            DbConnection.SqlConnection.Open();
             string commandText = "OMAZON.sp_INSERTAR_PRODUCTO_PROVEEDOR_EXTERNO";
             DbConnection.InitSqlComponents(commandText, 1);
+            DbConnection.SqlCommand.CommandType = CommandType.StoredProcedure;
+            DbConnection.SqlConnection.Open();
             SqlTransaction transaction = DbConnection.SqlConnection.BeginTransaction();
             DbConnection.SqlCommand.Transaction = transaction;
-            DbConnection.SqlCommand.CommandType = CommandType.StoredProcedure;
+
+            DbConnection.SqlCommand.Parameters.Add("@param_NOMBRE", SqlDbType.VarChar);
+            DbConnection.SqlCommand.Parameters.Add("@param_STOCK", SqlDbType.VarChar);
+            DbConnection.SqlCommand.Parameters.Add("@param_PRECIO", SqlDbType.VarChar);
+            DbConnection.SqlCommand.Parameters.Add("@param_ID_PROVEEDOR", SqlDbType.VarChar);
+            DbConnection.SqlCommand.Parameters.Add("@param_RUTA_IMAGEN", SqlDbType.VarChar);
+            DbConnection.SqlCommand.Parameters.Add("@param_CATEGORIA", SqlDbType.VarChar);
             try
             {
                 ProviderProductList.ForEach(p =>
                 {
-                    DbConnection.CreateParameter("@param_NOMBRE", SqlDbType.VarChar, p.Name);
-                    DbConnection.CreateParameter("@param_STOCK", SqlDbType.VarChar, p.Stock);
-                    DbConnection.CreateParameter("@param_PRECIO", SqlDbType.VarChar, p.Price);
-                    DbConnection.CreateParameter("@param_ID_PROVEEDOR", SqlDbType.VarChar, Id_proveedor);
-                    DbConnection.CreateParameter("@param_RUTA_IMAGEN", SqlDbType.VarChar, p.ImagePath);
-                    DbConnection.CreateParameter("@param_CATEGORIA", SqlDbType.VarChar, p.Category);
+                    DbConnection.SqlCommand.Parameters["@param_NOMBRE"].Value = p.Name;
+                    DbConnection.SqlCommand.Parameters["@param_STOCK"].Value = p.Stock;
+                    DbConnection.SqlCommand.Parameters["@param_PRECIO"].Value = p.Price;
+                    DbConnection.SqlCommand.Parameters["@param_ID_PROVEEDOR"].Value = Id_proveedor;
+                    DbConnection.SqlCommand.Parameters["@param_RUTA_IMAGEN"].Value = p.ImagePath;
+                    DbConnection.SqlCommand.Parameters["@param_CATEGORIA"].Value = p.Category;
+
                     DbConnection.JustExecuteNonQuery();
                 });
                 transaction.Commit();
