@@ -25,7 +25,7 @@ namespace OmazonWebAPI.Controllers
         }
 
         [HttpPost]
-        [Route("SendProviderRequest")]
+        [Route("/Omazon/API/SendProviderRequest")]
         public IActionResult DoAccessRequest([FromBody] AccessRequestModel request)
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
@@ -51,9 +51,9 @@ namespace OmazonWebAPI.Controllers
             var read = DbConnection.SqlDataReader.Read();
             return DbConnection.SqlDataReader.GetValue(0);
         }
-        
+
         [HttpPost]
-        [Route("ManageAccess")]
+        [Route("/Omazon/API/ManageAccess")]
         public IActionResult DoManageAccess([FromBody] AccessRequestModel request)
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
@@ -61,25 +61,24 @@ namespace OmazonWebAPI.Controllers
             string response = GetDbResponse(DbConnection).ToString();
             DbConnection.SqlConnection.Close();
 
-                switch (response)
-                {
-                    case "-1":
-                        return Ok("La solicitud no pudo ser procesada. Ya ha sido atendida.");
-                    case "0":
-                        return Ok("La solicitud de acceso no corresponde a ninguna clave de acceso. Consulte con el administrador.");
-                    case "1":
-                    return Ok(this.GetP1Products());
-                        //this.SendToOmazonProducts(this.GetP1Products(), int.Parse(response));
-                        break;
-                    case "2":
-                        this.SendToOmazonProducts(this.GetP2Products(), int.Parse(response));
-                        break;
-                    case "3":
-                        this.SendToOmazonProducts(this.GetP3Products(), int.Parse(response));
-                        break;
-                }
-                return Ok("La solicitud de acceso ha sido atendida con éxito");
+            switch (response)
+            {
+                case "-1":
+                    return Ok("La solicitud no pudo ser procesada. Ya ha sido atendida.");
+                case "0":
+                    return Ok("La solicitud de acceso no corresponde a ninguna clave de acceso. Consulte con el administrador.");
+                case "1":
+                    this.SendToOmazonProducts(this.GetP1Products(), int.Parse(response));
+                    break;
+                case "2":
+                    this.SendToOmazonProducts(this.GetP2Products(), int.Parse(response));
+                    break;
+                case "3":
+                    this.SendToOmazonProducts(this.GetP3Products(), int.Parse(response));
+                    break;
             }
+            return Ok("La solicitud de acceso ha sido atendida con éxito");
+        }
 
         private void ExecManageRequest(SqlServerConnection DbConnection, AccessRequestModel model)
         {
@@ -200,10 +199,50 @@ namespace OmazonWebAPI.Controllers
                     Stock = DbConnection.NpgsqlReader.GetInt32(5),
                     ImagePath = DbConnection.NpgsqlReader.GetString(4),
                     Category = DbConnection.NpgsqlReader.GetString(1)
-                }) ; 
+                });
             }
             DbConnection.NpgsqlConnection.Close();
             return ProductList;
+        }
+
+        [HttpGet]
+        [Route("/OMAZON/API/Requests")]
+        public IActionResult GetRequests()
+        {
+            SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
+            string commandText = "OMAZON.sp_OBTENER_SOLICITUDES";
+            DbConnection.InitSqlComponents(commandText, 1);
+            DbConnection.ExcecuteReader();
+
+            List<AccessRequestModel> RequestList = new List<AccessRequestModel>();
+
+            while (DbConnection.SqlDataReader.Read())
+            {
+                RequestList.Add(new AccessRequestModel
+                {
+                    RequestId = int.Parse(DbConnection.SqlDataReader["ID_SOLICITUD"].ToString()),
+                    Key = DbConnection.SqlDataReader["CLAVE"].ToString(),
+                    Details = DbConnection.SqlDataReader["DETALLES"].ToString(),
+                });
+            }
+            DbConnection.SqlConnection.Close();
+            return Ok(RequestList);
+        }
+
+        [HttpDelete]
+        [Route("/OMAZON/API/Delete-request/{id}")]
+        public IActionResult DeleteRequest(int id)
+        {
+                SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
+
+            string param_clave = "@param_ID_SOLICITUD",
+            commandText = "OMAZON.sp_BORRAR_SOLICITUD";
+
+            DbConnection.InitSqlComponents(commandText, 1);
+            DbConnection.CreateParameter(param_clave, SqlDbType.Int, id);
+            DbConnection.ExcecuteReader();
+                DbConnection.SqlConnection.Close();
+                return Ok("Borrada con éxito");
         }
     }
 }
