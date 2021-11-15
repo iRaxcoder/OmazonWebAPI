@@ -206,7 +206,7 @@ namespace OmazonWebAPI.Controllers
         }
 
         [HttpGet]
-        [Route("/OMAZON/API/Requests")]
+        [Route("/Omazon/API/Requests")]
         public IActionResult GetRequests()
         {
             SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
@@ -230,7 +230,7 @@ namespace OmazonWebAPI.Controllers
         }
 
         [HttpDelete]
-        [Route("/OMAZON/API/Delete-request/{id}")]
+        [Route("/Omazon/API/Delete-request/{id}")]
         public IActionResult DeleteRequest(int id)
         {
                 SqlServerConnection DbConnection = new SqlServerConnection(Configuration);
